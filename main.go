@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -9,6 +10,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -49,72 +52,59 @@ func GetMD5Hash(keyPub string, keyPri string) string {
 	hasher.Write([]byte(privateKey))
 	hasher.Write([]byte(publicKey))
 
-	//io.WriteString(hasher, keyPub)
-	//io.WriteString(hasher, keyPri)
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func getConnection() {
+func imprimir(resp Response) {
+	for i := 0; i < len(resp.Data.Results); i++ {
+		fmt.Println("Name: " + resp.Data.Results[i].Name)
+		fmt.Println(resp.Data.Results[i].ID)
+		fmt.Println("Description: " + resp.Data.Results[i].Description)
 
-	hash := GetMD5Hash(publicKey, privateKey)
-	ts := time.Now().Format("20060102150405")
-
-	// fmt.Printf("%x", hash)
-
-	URL := "http://gateway.marvel.com/v1/public/characters?ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash
-
-	//fmt.Println(URL)
-	resp, err := http.Get(URL)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	responseData, err := ioutil.ReadAll(resp.Body)
-
-	var responseObject Response
-	json.Unmarshal(responseData, &responseObject)
-
-	// Traer todos los elementos de la API
-	/*
-		// Imprimir todos los datos
-		for i := 0; i < len(responseObject.Data.Results); i++ {
-			fmt.Println("Name: " + responseObject.Data.Results[i].Name)
-			fmt.Println(responseObject.Data.Results[i].ID)
-			fmt.Println("Description: " + responseObject.Data.Results[i].Description)
-
-			for j := 0; j < len(responseObject.Data.Results[i].Comics.Items); j++ {
-				fmt.Println("Comic: " + responseObject.Data.Results[i].Comics.Items[j].Name)
-			}
-			for j := 0; j < len(responseObject.Data.Results[i].Series.Items); j++ {
-				fmt.Println("Serie: " + responseObject.Data.Results[i].Series.Items[j].Name)
-			}
-
-			fmt.Println("------------------------------------------")
+		for j := 0; j < len(resp.Data.Results[i].Comics.Items); j++ {
+			fmt.Println("Comic: " + resp.Data.Results[i].Comics.Items[j].Name)
 		}
-	*/
-	// -------------------------------------------------
+		for j := 0; j < len(resp.Data.Results[i].Series.Items); j++ {
+			fmt.Println("Serie: " + resp.Data.Results[i].Series.Items[j].Name)
+		}
 
-	//fmt.Println(responseObject.Data.Results[0])
+		fmt.Println("------------------------------------------")
+	}
+}
+func imprimirLista(resp Response) {
+	for i := 0; i < len(resp.Data.Results); i++ {
+		fmt.Println("Name: " + resp.Data.Results[i].Name)
+	}
 }
 
-func buscarHeroe(heroe string) {
-	fmt.Println(heroe)
-	hash := GetMD5Hash(publicKey, privateKey)
-	ts := time.Now().Format("20060102150405")
+func main() {
+	//var opcion int
+	var heroe string
+	var opcion int
 
-	// fmt.Printf("%x", hash)
+	reader := bufio.NewReader(os.Stdin)
 
-	hero, err := url.Parse(heroe)
-	if err != nil {
-		fmt.Println(err)
-	}
-	heroeposta := hero.String()
-	fmt.Println(heroeposta)
-	URL := "http://gateway.marvel.com/v1/public/characters?name=" + heroeposta + "?ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash
+	fmt.Println("Elegi una opcion: ")
+	fmt.Println("1- Busca a tu heroe")
+	fmt.Println("2- Lista de los primeros 20 heroes")
 
-	fmt.Println(URL)
-	/*
+	fmt.Scanf("%d", &opcion)
+	switch opcion {
+	case 1:
+		fmt.Print("Elige un heroe: ")
+		entrada, _ := reader.ReadString('\n')      // Leer hasta el separador de salto de línea
+		heroe = strings.TrimRight(entrada, "\r\n") // Remover el salto de línea de la entrada del usuario
+
+		hash := GetMD5Hash(publicKey, privateKey)
+		ts := time.Now().Format("20060102150405")
+
+		hero, err := url.Parse(heroe)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		URL := "http://gateway.marvel.com/v1/public/characters?name=" + hero.String() + "&ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash
+		// ************************
 		resp, err := http.Get(URL)
 
 		if err != nil {
@@ -125,58 +115,35 @@ func buscarHeroe(heroe string) {
 
 		var responseObject Response
 		json.Unmarshal(responseData, &responseObject)
-	*/
-	// Traer todos los elementos de la API
-	/*
+		// ********************************
+
 		// Imprimir todos los datos
-		for i := 0; i < len(responseObject.Data.Results); i++ {
-			fmt.Println("Name: " + responseObject.Data.Results[i].Name)
-			fmt.Println(responseObject.Data.Results[i].ID)
-			fmt.Println("Description: " + responseObject.Data.Results[i].Description)
+		imprimir(responseObject)
 
-			for j := 0; j < len(responseObject.Data.Results[i].Comics.Items); j++ {
-				fmt.Println("Comic: " + responseObject.Data.Results[i].Comics.Items[j].Name)
-			}
-			for j := 0; j < len(responseObject.Data.Results[i].Series.Items); j++ {
-				fmt.Println("Serie: " + responseObject.Data.Results[i].Series.Items[j].Name)
-			}
+	case 2:
 
-			fmt.Println("------------------------------------------")
-		}
-	*/
-	// -------------------------------------------------
-
-	//fmt.Println(responseObject.Data.Results[0])
-}
-
-func main() {
-	//var opcion int
-	var heroe string
-	fmt.Printf("Elige un heroe: ")
-	fmt.Scanf("%s", &heroe) /*
-		fmt.Printf("Elegi una opcion: ")
-		fmt.Scanf("%d", &opcion)
-		switch opcion {
-		case 1:
-		case 2:
-			fmt.Print("Opcion 2")
-		}
-	*/
-	fmt.Printf("%s", heroe) /*
 		hash := GetMD5Hash(publicKey, privateKey)
 		ts := time.Now().Format("20060102150405")
 
-		// fmt.Printf("%x", hash)
+		URL := "http://gateway.marvel.com/v1/public/characters?ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash
+		// ***********************
+		resp, err := http.Get(URL)
 
-		hero, err := url.Parse(heroe)
 		if err != nil {
-			fmt.Println(err)
+			log.Fatal(err)
 		}
-		heroeposta := hero.String()
-		fmt.Println(heroeposta)
-		URL := "http://gateway.marvel.com/v1/public/characters?name=" + heroeposta + "?ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash
 
-		fmt.Println(URL)
-	*/
-	//getConnection()
+		responseData, err := ioutil.ReadAll(resp.Body)
+
+		var responseObject Response
+		json.Unmarshal(responseData, &responseObject)
+		// ********************************
+		// No entiendo este punto, debo solo imprimir una lista con los nombres o tener todas las estructuras en una array
+		// para despues usarlo en otro caso
+		// Si es la segunda en responseObject se encuentra todos los datos de los 20 heroes ordenados
+		// para ser usado en otros problemas / ejercicios
+		// Por ejemplo el id del primer heroe          responseObject.Data.Results[0].ID
+		// Imprimir todos los datos
+		imprimirLista(responseObject)
+	}
 }
